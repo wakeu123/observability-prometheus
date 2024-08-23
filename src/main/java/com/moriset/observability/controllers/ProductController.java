@@ -1,48 +1,39 @@
 package com.moriset.observability.controllers;
 
-import com.moriset.observability.entities.Product;
-import com.moriset.observability.models.Post;
-import com.moriset.observability.repositories.ProductRepository;
-import org.springframework.core.ParameterizedTypeReference;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestClient;
+import com.moriset.observability.entities.models.Post;
+import com.moriset.observability.services.ProductService;
+import com.moriset.observability.entities.dtos.ProductDto;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
-
 import static org.springframework.http.HttpStatus.CREATED;
 
+@Validated
 @RestController
 @RequestMapping(path = "products")
 public class ProductController {
 
-    private RestClient restClient;
-    private final ProductRepository productRepository;
+    private ProductService productService;
 
-    public ProductController(RestClient.Builder restClient, ProductRepository productRepository) {
-        this.restClient = restClient
-                .baseUrl("https://jsonplaceholder.typicode.com")
-                .build();
-        this.productRepository = productRepository;
+    public ProductController(ProductService productService) {
+        this.productService = productService;
     }
 
     @GetMapping
-    public ResponseEntity<List<Product>> search() {
-        return ResponseEntity.ok().body(this.productRepository.findAll());
+    public ResponseEntity<List<ProductDto>> search() {
+        return ResponseEntity.ok().body(this.productService.search());
     }
 
     @GetMapping("/posts")
     public ResponseEntity<List<Post>> getPosts() {
-       return ResponseEntity.ok().body(
-               this.restClient.get()
-                       .uri("/posts")
-                       .retrieve()
-                       .body(new ParameterizedTypeReference<List<Post>>() {})
-       );
+       return ResponseEntity.ok().body(this.productService.searchPost());
     }
 
     @PostMapping
-    public ResponseEntity<Product> save(@RequestBody Product product) {
-        return ResponseEntity.status(CREATED).body(this.productRepository.save(product));
+    public ResponseEntity<ProductDto> save(@Valid @RequestBody ProductDto dto) {
+        return ResponseEntity.status(CREATED).body(this.productService.save(dto));
     }
 }
